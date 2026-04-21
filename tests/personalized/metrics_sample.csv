@@ -1,0 +1,2 @@
+precision@10,recall@10,hit_rate@10,ndcg@10,catalog_coverage,num_eval_users,num_recommendation_rows,num_candidate_pairs
+0.0,0.0,0.0,0.0,0.219,50,500,100000

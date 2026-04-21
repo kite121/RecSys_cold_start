@@ -1,0 +1,2 @@
+precision@10,recall@10,hit_rate@10,map@10,ndcg@10,catalog_coverage,num_eval_users,num_recommendation_rows,num_candidate_pairs,num_candidate_items,avg_true_items_per_user,train_rows_before_filter,train_rows_after_filter,train_users_after_filter,train_items_after_filter,min_user_interactions,min_item_interactions,factors,regularization,iterations,alpha
+0.009523809523809523,0.09523809523809523,0.09523809523809523,0.05032879818594105,0.06065275804295564,0.4130913091309131,105,1050,10500,1818,1.0,3794,3794,105,1805,1,1,20,0.01,150,20.0

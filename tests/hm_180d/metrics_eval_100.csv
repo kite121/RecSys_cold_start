@@ -1,0 +1,2 @@
+precision@10,recall@10,hit_rate@10,map@10,ndcg@10,catalog_coverage,num_eval_users,num_recommendation_rows,num_candidate_pairs,num_candidate_items,avg_true_items_per_user
+0.00480000000000001,0.016678935129198293,0.0394,0.006191356481481484,0.010923529920417927,0.03444764975394536,5000,50000,500000,5893,3.1078
