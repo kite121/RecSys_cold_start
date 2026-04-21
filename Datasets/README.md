@@ -99,8 +99,32 @@ A customer behavior analysis dataset containing purchase, return, and churn info
 
 ---
 
+## 5. H&M Personalized Fashion Recommendations
+
+**Source:** [Competition Data](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)
+
+**Description:**  
+A large-scale fashion recommendation dataset from the H&M Kaggle competition, designed for personalized product recommendation based on historical transactions, customer metadata, and product metadata.
+
+**Note:**  
+This dataset is **not included in the repository files** because of its size and competition-based distribution. It should be downloaded manually from Kaggle.
+
+**Main files and features:**
+- `articles.csv` — product metadata with fields such as `article_id`, `prod_name`, `product_type_name`, `colour_group_name`, `department_name`, `section_name`, `garment_group_name`, `detail_desc`
+- `customers.csv` — customer metadata including `customer_id`, `FN`, `Active`, `club_member_status`, `fashion_news_frequency`, `age`, `postal_code`
+- `transactions_train.csv` — historical purchase log with `t_dat`, `customer_id`, `article_id`, `price`, `sales_channel_id`
+- `sample_submission.csv` — sample recommendation submission format
+- `images/` — product images linked to articles
+
+**Why it is useful:**
+- suitable for recommendation systems and cold-start experiments;
+- combines transactional, customer, catalog, and image information;
+- supports customer behavior analysis, candidate generation, ranking, and hybrid recommendation approaches.
+
+---
+
 ## Notes
 
 - All datasets are provided in CSV format.
 - The datasets are intended for experiments in recommendation systems, customer behavior analysis, and predictive modeling.
-- One of the datasets is not stored in the repository due to file size limitations and must be downloaded manually.
+- Some datasets are not stored in the repository due to file size limitations and must be downloaded manually.
