@@ -46,6 +46,42 @@ Warm/cold split посчитан по train-файлам гибридной мо
 | hm_small | last_30d_eval_100 | 882591 | 30 | 27201 | 5572 | 21629 | 0.204845 | 0.795155 |
 | hm_180d | last_180d_eval_100 | 7782138 | 30 | 50338 | 21887 | 28451 | 0.434801 | 0.565199 |
 
+
+# Training Cost Summary
+
+Скрипт прогоняет обучение двух моделей на одинаковых train-файлах:
+
+- `hybrid` = ALS + CatBoost из `cold-item`
+- `als` = обычный ALS baseline из `recommender`
+
+Метрики затрат:
+
+- `wall_time_sec` — полное wall-clock время обучения
+- `peak_rss_mb` — максимальный RSS процесса и его дочерних процессов
+
+| Dataset | Model | Status | Wall time (sec) | Peak RSS (MB) | Train rows | Users | Items | Warm items | Cold items |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| personalized | hybrid | ok | 20.94 | 505.03 | 145000 | 5000 | 2000 | 2000 | 0 |
+| personalized | als | ok | 2.93 | 117.90 | 144980 | 5000 | 2000 |  |  |
+| ecommerce | hybrid | ok | 45.48 | 495.36 | 201975 | 49673 | 1964 | 1964 | 0 |
+| ecommerce | als | ok | 13.62 | 139.05 | 201975 | 49673 | 1964 |  |  |
+| shopping | hybrid | ok | 2.92 | 168.39 | 3795 | 105 | 1805 | 1043 | 762 |
+| shopping | als | ok | 1.67 | 88.01 | 3794 | 105 | 1805 |  |  |
+| ecommerce_consumer | hybrid | ok | 73.98 | 1886.60 | 1059949 | 105273 | 134 | 134 | 0 |
+| ecommerce_consumer | als | ok | 32.70 | 478.50 | 891763 | 105273 | 134 |  |  |
+| hm_small | hybrid | ok | 263.31 | 2204.12 | 782721 | 205159 | 27201 | 5187 | 22014 |
+| hm_small | als | ok | 54.46 | 407.26 | 782721 | 205159 | 27201 |  |  |
+
+## Configs
+
+| Dataset | Hybrid config | ALS config |
+|---|---|---|
+| personalized | min_warm=5, als_iter=150, reg_iter=300, neg_per_user=3 | min_user=1, min_item=1, iter=150, reg=0.01 |
+| ecommerce | min_warm=5, als_iter=50, reg_iter=100, neg_per_user=1 | min_user=1, min_item=1, iter=150, reg=0.01 |
+| shopping | min_warm=2, als_iter=50, reg_iter=100, neg_per_user=1 | min_user=1, min_item=1, iter=150, reg=0.01 |
+| ecommerce_consumer | min_warm=30, als_iter=50, reg_iter=100, neg_per_user=1 | min_user=1, min_item=1, iter=150, reg=0.01 |
+| hm_small | min_warm=30, als_iter=50, reg_iter=100, neg_per_user=1 | min_user=1, min_item=1, iter=150, reg=0.01 |
+
 ## Ключевые выводы
 
 - `ecommerce`: гибрид немного лучше ALS: HitRate@10 вырос с 0.111400 до 0.124000, NDCG@10 с 0.050208 до 0.056773.
