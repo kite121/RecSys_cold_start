@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
 
@@ -49,14 +50,36 @@ def predict_endpoint(body: dict) -> PredictResponse:
     rec_df = result.recommendations_df
     if not rec_df.empty:
         item_col = config.data.item_id_col
-        score_col = "score"
-        rank_col = "rank"
+        if "ranker_score" in rec_df.columns:
+            score_col = "ranker_score"
+        elif "score" in rec_df.columns:
+            score_col = "score"
+        elif "retrieval_score" in rec_df.columns:
+            score_col = "retrieval_score"
+        else:
+            score_col = ""
+
+        if "rank" in rec_df.columns:
+            rec_df = rec_df.copy()
+            rec_df["_api_rank"] = rec_df["rank"]
+        elif "group_id" in rec_df.columns:
+            rec_df = rec_df.copy()
+            rec_df["_api_rank"] = rec_df.groupby("group_id", sort=False).cumcount() + 1
+        else:
+            rec_df = rec_df.copy()
+            rec_df["_api_rank"] = pd.Series(range(1, len(rec_df) + 1), index=rec_df.index)
         for _, row in rec_df.iterrows():
+            score_value = None
+            if score_col and pd.notna(row.get(score_col)):
+                try:
+                    score_value = float(row[score_col])
+                except (TypeError, ValueError):
+                    score_value = None
             recs.append(
                 RecommendationItem(
                     item_id=str(row[item_col]) if item_col in rec_df.columns else str(row.get("item_id")),
-                    score=float(row[score_col]) if score_col in rec_df.columns else None,
-                    rank=int(row[rank_col]) if rank_col in rec_df.columns and row[rank_col] is not None else None,
+                    score=score_value,
+                    rank=int(row["_api_rank"]) if pd.notna(row.get("_api_rank")) else None,
                 )
             )
 
