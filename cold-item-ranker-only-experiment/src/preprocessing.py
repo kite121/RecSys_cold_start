@@ -314,6 +314,11 @@ class RecommendationDataPreprocessor:
             empty_matrix = sparse.csr_matrix((len(pair_feature_df), 0))
             return pair_feature_df, empty_matrix
 
+        if pair_feature_df.empty:
+            num_output_features = len(self.feature_preprocessor.get_feature_names_out())
+            empty_matrix = sparse.csr_matrix((0, num_output_features), dtype=float)
+            return pair_feature_df, empty_matrix
+
         feature_columns = self.numeric_cols + self.categorical_cols
         feature_matrix = self.feature_preprocessor.transform(pair_feature_df[feature_columns])
         return pair_feature_df, feature_matrix

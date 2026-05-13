@@ -52,6 +52,13 @@ class ALSRecommender:
     artifacts: ALSArtifacts | None = None
     seen_items_by_user: dict[str, set[str]] = field(default_factory=dict)
 
+    def ensure_is_fitted(self) -> None:
+        """
+        Validate that ALS artifacts and the fitted model are available.
+        """
+        if self.model is None or self.artifacts is None:
+            raise RuntimeError("ALS model is not fitted.")
+
     def prepare_interactions(self, interactions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Validate ALS input before matrix construction.
@@ -133,11 +140,12 @@ class ALSRecommender:
         """
         Return ALS score for a user-item pair, or ``None`` if ids are unseen.
         """
-        if self.model is None or self.artifacts is None:
-            raise RuntimeError("ALS model is not fitted.")
+        self.ensure_is_fitted()
 
-        user_idx = self.artifacts.user2idx.get(user_id)
-        item_idx = self.artifacts.item2idx.get(item_id)
+        normalized_user_id = str(user_id)
+        normalized_item_id = str(item_id)
+        user_idx = self.artifacts.user2idx.get(normalized_user_id)
+        item_idx = self.artifacts.item2idx.get(normalized_item_id)
         if user_idx is None or item_idx is None:
             return None
 
@@ -145,16 +153,52 @@ class ALSRecommender:
         item_vector = np.asarray(self.model.item_factors[item_idx], dtype=np.float32)
         return float(np.dot(user_vector, item_vector))
 
-    def score_pairs(self, pairs_df: pd.DataFrame) -> pd.Series:
+    def score_user_items(self, user_id: str, item_ids: list[str]) -> np.ndarray:
+        """
+        Score a list of items for a single user.
+
+        Unseen users or unseen items receive a score of 0.0.
+        """
+        if not item_ids:
+            return np.asarray([], dtype=float)
+        scores = [self.score(str(user_id), str(item_id)) or 0.0 for item_id in item_ids]
+        return np.asarray(scores, dtype=float)
+
+    def score_pairs(
+        self,
+        pairs_df: pd.DataFrame | None = None,
+        user_ids: list[str] | pd.Series | np.ndarray | None = None,
+        item_ids: list[str] | pd.Series | np.ndarray | None = None,
+    ) -> pd.Series:
         """
         Score many pairs at once and return a pandas Series aligned with the input order.
+
+        Supported call styles:
+        - score_pairs(pairs_df=df[[user_col, item_col]])
+        - score_pairs(user_ids=[...], item_ids=[...])
         """
-        ensure_columns_present(pairs_df, [self.user_col, self.item_col])
+        if pairs_df is not None:
+            ensure_columns_present(pairs_df, [self.user_col, self.item_col])
+            score_index = pairs_df.index
+            resolved_pairs_df = pairs_df[[self.user_col, self.item_col]].copy()
+        else:
+            if user_ids is None or item_ids is None:
+                raise ValueError("Either pairs_df or both user_ids and item_ids must be provided.")
+            if len(user_ids) != len(item_ids):
+                raise ValueError("user_ids and item_ids must have the same length.")
+            resolved_pairs_df = pd.DataFrame(
+                {
+                    self.user_col: pd.Series(user_ids, dtype="object").astype(str),
+                    self.item_col: pd.Series(item_ids, dtype="object").astype(str),
+                }
+            )
+            score_index = resolved_pairs_df.index
+
         scores = [
             self.score(str(row[self.user_col]), str(row[self.item_col])) or 0.0
-            for _, row in pairs_df.iterrows()
+            for _, row in resolved_pairs_df.iterrows()
         ]
-        return pd.Series(scores, index=pairs_df.index, name="als_score")
+        return pd.Series(scores, index=score_index, name="als_score")
 
     def recommend(
         self,
@@ -169,17 +213,17 @@ class ALSRecommender:
         If ``candidate_item_ids`` is provided, ALS scores only that candidate pool.
         Otherwise the method uses the full catalog through ``implicit.recommend``.
         """
-        if self.model is None or self.artifacts is None:
-            raise RuntimeError("ALS model is not fitted.")
+        self.ensure_is_fitted()
 
-        user_idx = self.artifacts.user2idx.get(user_id)
+        normalized_user_id = str(user_id)
+        user_idx = self.artifacts.user2idx.get(normalized_user_id)
         if user_idx is None:
             return []
 
         if candidate_item_ids is None:
             item_indices, scores = self.model.recommend(
                 userid=user_idx,
-                user_items=self.artifacts.user_item_matrix,
+                user_items=self.artifacts.user_item_matrix[user_idx],
                 N=top_k,
                 filter_already_liked_items=exclude_seen,
             )
@@ -194,9 +238,9 @@ class ALSRecommender:
 
         candidate_scores = []
         for item_id in known_candidates:
-            if exclude_seen and item_id in self.seen_items_by_user.get(user_id, set()):
+            if exclude_seen and item_id in self.seen_items_by_user.get(normalized_user_id, set()):
                 continue
-            score = self.score(user_id, item_id)
+            score = self.score(normalized_user_id, item_id)
             if score is not None:
                 candidate_scores.append((item_id, score))
         candidate_scores.sort(key=lambda pair: pair[1], reverse=True)

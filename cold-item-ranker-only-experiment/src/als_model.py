@@ -125,8 +125,8 @@ class ALSRecommender:
             random_state=self.random_state,
             dtype=np.float32,
         )
-        item_user_matrix = (self.artifacts.user_item_matrix.T * self.alpha).tocsr()
-        self.model.fit(item_user_matrix)
+        weighted_user_item_matrix = (self.artifacts.user_item_matrix * self.alpha).tocsr()
+        self.model.fit(weighted_user_item_matrix)
         return self
 
     def score(self, user_id: str, item_id: str) -> float | None:
@@ -177,9 +177,10 @@ class ALSRecommender:
             return []
 
         if candidate_item_ids is None:
+            target_user_items = self.artifacts.user_item_matrix[user_idx]
             item_indices, scores = self.model.recommend(
                 userid=user_idx,
-                user_items=self.artifacts.user_item_matrix,
+                user_items=target_user_items,
                 N=top_k,
                 filter_already_liked_items=exclude_seen,
             )

@@ -32,7 +32,7 @@ def ensure_regression_target(y: np.ndarray) -> np.ndarray:
 
 
 @dataclass
-class CatBoostRegressorModel:
+class RegressorModel:
     """
     Feature model that learns to predict ALS scores from user/item features.
 
@@ -51,12 +51,19 @@ class CatBoostRegressorModel:
     model: object | None = None
     feature_names: list[str] = field(default_factory=list)
 
+    def ensure_is_fitted(self) -> None:
+        """
+        Validate that the regressor model has already been trained.
+        """
+        if self.model is None:
+            raise RuntimeError("CatBoostRegressor is not fitted.")
+
     def fit(
         self,
         X: sparse.spmatrix | np.ndarray,
         y: np.ndarray,
         feature_names: list[str] | None = None,
-    ) -> "CatBoostRegressorModel":
+    ) -> "RegressorModel":
         """
         Train CatBoostRegressor on prepared pair features with target = ALS score.
         """
@@ -93,8 +100,7 @@ class CatBoostRegressorModel:
         """
         Predict ALS-like scores for a prepared feature matrix.
         """
-        if self.model is None:
-            raise RuntimeError("CatBoostRegressor is not fitted.")
+        self.ensure_is_fitted()
         X = ensure_feature_matrix(X)
         return np.asarray(self.model.predict(X), dtype=float)
 
@@ -105,9 +111,8 @@ class CatBoostRegressorModel:
         joblib.dump(self, path)
 
     @classmethod
-    def load(cls, path: str | Path) -> "CatBoostRegressorModel":
+    def load(cls, path: str | Path) -> "RegressorModel":
         """
         Load a saved regressor wrapper.
         """
         return joblib.load(path)
-
