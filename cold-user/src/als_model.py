@@ -132,8 +132,8 @@ class ALSRecommender:
             random_state=self.random_state,
             dtype=np.float32,
         )
-        item_user_matrix = (self.artifacts.user_item_matrix.T * self.alpha).tocsr()
-        self.model.fit(item_user_matrix)
+        weighted_user_item_matrix = (self.artifacts.user_item_matrix * self.alpha).tocsr()
+        self.model.fit(weighted_user_item_matrix)
         return self
 
     def score(self, user_id: str, item_id: str) -> float | None:
