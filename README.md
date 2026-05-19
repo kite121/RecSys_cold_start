@@ -6,7 +6,7 @@
 
 - [cold-item](/Users/kite/RecSys_cold_start/cold-item/README.md) — текущий baseline для `cold-item`
 - [cold-item-ranker-only-experiment](/Users/kite/RecSys_cold_start/cold-item-ranker-only-experiment/README.md) — экспериментальная retrieval + ranking версия
-- [cold-user](/Users/kite/RecSys_cold_start/cold-user/README.md) — текущая реализация unified `warm-user / cold-user / global cold-start`
+- [cold-user-and-item](/Users/kite/RecSys_cold_start/cold-user-and-item/README.md) — текущая unified-реализация для `warm-user / cold-user / cold-item / global cold-start`
 
 ## Текущее состояние
 
@@ -29,25 +29,26 @@
 - synthetic vectors для cold items
 - `CatBoostRanker`
 
-Эта версия сохранена в репозитории как экспериментальная и документированная причина, почему от неё отказались как от основной. При этом часть её кода была переиспользована позже в `cold-user`, в частности:
+Эта версия сохранена в репозитории как экспериментальная и документированная причина, почему от неё отказались как от основной. При этом часть её кода была переиспользована позже в `cold-user-and-item`, в частности:
 
 - `popular_selector`
 - `maxvol_selector`
 
-### `cold-user`
+### `cold-user-and-item`
 
 Это текущая production-like ветка для нового сценария.
 
-Она не просто добавляет новый cold-user flow, а объединяет в себе:
+Она объединяет в себе:
 
 - логику `cold-user`
+- логику `cold-item`
 - логику `global cold-start`
-- и базовую идею `cold-item` baseline
 
 Поддерживаются:
 
 - `warm-user`
 - `cold-user`
+- `cold-item`
 - `global cold-start`
 
 Основной inference здесь уже работает по:
@@ -58,7 +59,7 @@ optional user_features
 top_k
 ```
 
-## Как устроен pipeline `cold-user`
+## Как устроен pipeline `cold-user-and-item`
 
 ```mermaid
 flowchart TD
@@ -119,11 +120,19 @@ RecSys_cold_start/
 │   └── README.md
 ├── cold-item-ranker-only-experiment/
 │   └── README.md
-├── cold-user/
+├── cold-user-and-item/
 │   ├── README.md
+│   ├── requirements.txt
 │   ├── config.py
 │   ├── main_train.py
 │   ├── main_infer.py
+│   ├── main_api.py
+│   ├── api/
+│   │   ├── app.py
+│   │   ├── model_store.py
+│   │   ├── routes.py
+│   │   ├── schemas.py
+│   │   └── service.py
 │   └── src/
 │       ├── als_model.py
 │       ├── cold_user_recommender.py
@@ -153,7 +162,7 @@ RecSys_cold_start/
   - экспериментальная retrieval + ranking версия
   - использовать её как основное решение не рекомендуется, потому что её сложность не была достаточно оправдана итоговым качеством
 
-- `cold-user/`
+- `cold-user-and-item/`
   - наиболее полная и цельная текущая реализация
   - объединяет в себе решение для:
     - `cold-item`

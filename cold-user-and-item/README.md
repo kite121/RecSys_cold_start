@@ -1,6 +1,6 @@
-# Cold-User Hybrid Recommender
+# Cold-User-and-Item Hybrid Recommender
 
-Это текущая unified-реализация для пользовательского cold-start сценария.
+Это текущая unified-реализация для сценариев `cold-user`, `cold-item` и `global cold-start`.
 
 Поддерживаются три режима:
 
@@ -60,11 +60,20 @@ top_k
 ## Структура проекта
 
 ```text
-cold-user/
+cold-user-and-item/
 ├── README.md
+├── requirements.txt
 ├── config.py
 ├── main_train.py
 ├── main_infer.py
+├── main_api.py
+├── api/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── model_store.py
+│   ├── routes.py
+│   ├── schemas.py
+│   └── service.py
 └── src/
     ├── als_model.py
     ├── cold_user_recommender.py
@@ -169,16 +178,16 @@ cold-user/
 Обучение:
 
 ```bash
-python cold-user/main_train.py \
+python cold-user-and-item/main_train.py \
   --train-csv path/to/train.csv \
-  --model-output cold-user/artifacts/hybrid_model.joblib
+  --model-output cold-user-and-item/artifacts/hybrid_model.joblib
 ```
 
 Инференс:
 
 ```bash
-python cold-user/main_infer.py \
-  --model-path cold-user/artifacts/hybrid_model.joblib \
+python cold-user-and-item/main_infer.py \
+  --model-path cold-user-and-item/artifacts/hybrid_model.joblib \
   --user-id 123 \
   --top-k 10
 ```
@@ -186,11 +195,50 @@ python cold-user/main_infer.py \
 С optional user features:
 
 ```bash
-python cold-user/main_infer.py \
-  --model-path cold-user/artifacts/hybrid_model.joblib \
+python cold-user-and-item/main_infer.py \
+  --model-path cold-user-and-item/artifacts/hybrid_model.joblib \
   --user-id 123 \
   --user-features-json '{"user_age": 25}' \
   --top-k 10
+```
+
+## API
+
+Установка зависимостей:
+
+```bash
+pip install -r cold-user-and-item/requirements.txt
+```
+
+Запуск API:
+
+```bash
+python cold-user-and-item/main_api.py \
+  --model-path cold-user-and-item/artifacts/hybrid_model.joblib \
+  --host 127.0.0.1 \
+  --port 8000
+```
+
+Основные endpoints:
+
+- `GET /health`
+- `GET /ready`
+- `POST /recommend`
+
+Пример запроса:
+
+```bash
+curl -X POST http://127.0.0.1:8000/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"123","top_k":10}'
+```
+
+Пример запроса с `user_features`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"123","user_features":{"user_gender":"male"},"top_k":10}'
 ```
 
 ## Что проверено
@@ -201,7 +249,11 @@ python cold-user/main_infer.py \
 - inference для `warm-user`
 - inference для `cold-user`
 - inference для `cold-user` без дополнительных `user_features`
+- локальный FastAPI API:
+  - `GET /health`
+  - `GET /ready`
+  - `POST /recommend`
 - train в `global_cold_start`
 - inference для `global_cold_start`
 
-То есть основной current pipeline в `cold-user/` сейчас работает end-to-end.
+То есть основной current pipeline в `cold-user-and-item/` сейчас работает end-to-end.

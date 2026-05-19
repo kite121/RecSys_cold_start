@@ -96,6 +96,17 @@ class InferenceConfig:
 
 
 @dataclass(slots=True)
+class APIConfig:
+    """
+    Default API runtime parameters.
+    """
+
+    host: str = "127.0.0.1"
+    port: int = 8000
+    reload: bool = False
+
+
+@dataclass(slots=True)
 class ModeConfig:
     """
     Named runtime modes used by the recommender.
@@ -118,6 +129,7 @@ class ColdUserProjectConfig:
     regressor: RegressorConfig = field(default_factory=RegressorConfig)
     candidate: CandidateConfig = field(default_factory=CandidateConfig)
     inference: InferenceConfig = field(default_factory=InferenceConfig)
+    api: APIConfig = field(default_factory=APIConfig)
     modes: ModeConfig = field(default_factory=ModeConfig)
 
 
